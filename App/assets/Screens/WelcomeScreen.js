@@ -1,5 +1,5 @@
-import { StatusBar, StatusBarStyle } from 'expo-status-bar';
-import { FlatList, StyleSheet, Text, View, SafeAreaView, Button } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View, Button } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,16 +17,13 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
   const Workouts = ({route, isEditing, setIsEditing}) => {
     const navigation = useNavigation();
   
-    const [value, setValue] = useState(null);
-    const [isFocused, setIsFocused] = useState(false);
+
     const [data, setData] = useState([]);
 
     const [itemModalVisible, setItemModalVisible] = useState(false);
     const [inputText, setInputText] = useState('');
 
     //checkbox handler*********************************************************
-    let bouncyCheckboxRef = BouncyCheckbox | null;
-    const [checkboxState, setCheckboxState] = useState(false);
     const [checkedItems, setCheckedItems] = useState([]);
 
 
@@ -78,10 +75,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
   
         // store the new data in local storage
         await storeData(newData)
-        console.log('--------------------------------------------------')
-        console.log('Added new item: ', newData[newData.length - 1].label)
-        console.log('Total Data: ', newData)
-        console.log('--------------------------------------------------')
       }
     };
   
@@ -108,9 +101,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
         //save data to storage
         try{
-            console.log('--------------------------------------------------')
-            console.log('Deleted item: ', data[index].label)
-            console.log('---------------------------------------------------')
             await AsyncStorage.removeItem(`@storage_Key_${data[index].value}`);
             setData(newData);
             await AsyncStorage.setItem('@storage_Key', JSON.stringify(newData));
@@ -355,7 +345,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
                         size={30} 
                         color="red" 
                         onPress={() => {
-                            console.log('Checked items: ', checkedItems.length);
                             confirmDeleteMultiple();
                         }}
                         

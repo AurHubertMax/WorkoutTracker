@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './App/assets/Screens/WelcomeScreen';
-import ItemScreen from './App/assets/Screens/ItemScreen';
 import BottomTabNavigator from './App/assets/Screens/BottomTabNavigator';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 

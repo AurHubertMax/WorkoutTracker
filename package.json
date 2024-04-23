@@ -27,6 +27,7 @@
     "react-native-bouncy-checkbox": "^3.0.7",
     "react-native-chart-kit": "^6.12.0",
     "react-native-collapsible": "^1.6.1",
+    "react-native-confetti": "^0.1.0",
     "react-native-draggable-flatlist": "^4.0.1",
     "react-native-element-dropdown": "^2.10.1",
     "react-native-gifted-charts": "^1.4.10",

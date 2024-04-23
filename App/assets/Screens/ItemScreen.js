@@ -1,19 +1,21 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import React, { Component } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput, Button } from 'react-native';
-import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-reanimated-table';
+import { Table, TableWrapper, Row, Cell } from 'react-native-reanimated-table';
 import { TouchableOpacity, Animated } from 'react-native';
 import { Modal } from 'react-native';
 import { MaterialCommunityIcons } from 'react-native-vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import Confetti from 'react-native-confetti';
 
 
 
 class ItemScreen extends Component {
     constructor(props) {
       super(props);
+      this.confetti = React.createRef();
       this.state = {
         tableHead: ['Exercise', 'lbs', 'S x R'],
         widthArr: [197, 80, 80],
@@ -74,24 +76,20 @@ class ItemScreen extends Component {
 
             //calculate and store volume for each exercise
             for (let i = 0; i < parsedData.length; i++) {
-                const totalVolume = 0;
-                if (parsedData[i][0] === '' || parsedData[i][1] === '' || parsedData[i][2] === '') {
-                    const weights = 0;
-                    const sets = 0;
-                    const reps = 0;
-                    const totalVolume = weights * sets * reps;
-                } else {
+                let totalVolume = 0;
+                if (parsedData[i][0] != '' && parsedData[i][1] != '' && parsedData[i][2] != '') {
                     const weights = parseInt(parsedData[i][1]);
                     const setsAndReps = parsedData[i][2].split('X');
                     const sets = parseInt(setsAndReps[0]);
                     const reps = parseInt(setsAndReps[1]);
-                    const totalVolume = weights * sets * reps;
+                    totalVolume = weights * sets * reps;
                 }
 
                 const exercise = parsedData[i][0];
                 if (exercise === '' || exercise === null) {
                     continue;
                 }
+
                 const volumeKey = `@volume_${this.props.route.params.item.value}_${exercise}`;
                 const storedVolumes = await AsyncStorage.getItem(volumeKey);
                 let volumes = storedVolumes ? JSON.parse(storedVolumes) : [];
@@ -104,6 +102,24 @@ class ItemScreen extends Component {
     }
 
     //delete all volumes
+    deleteAllAlert = () => {
+        Alert.alert(
+            "Delete All Volumes",
+            "Are you sure you want to delete all volumes?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                { 
+                    text: "OK", 
+                    onPress: () => this.clearVolumes() 
+                }
+            ],
+            { cancelable: false }
+        );
+    }
+
     deleteAllVolumes = async () => {
         try {
             const keys = await AsyncStorage.getAllKeys();
@@ -186,7 +202,6 @@ class ItemScreen extends Component {
 
     //handles SxR row press
     handleSxRRowPress = (cellIndex) => {
-        console.log('cell index at row press: ', cellIndex)
         this.setState({modalSelectedRow: cellIndex});
         this.handleSxRModal();
         
@@ -195,8 +210,6 @@ class ItemScreen extends Component {
 
     handleSxRModal = () => {
         this.setState({ modalVisible: true });
-        console.log('-------------------------')
-        console.log('cell pressed');
     }
 
     closeSxRModal = () => {
@@ -324,10 +337,13 @@ class ItemScreen extends Component {
     handleComplete = async () => {
         await this.storeVolumes();
         this.getVolumes();  
+        if (this.confetti.current) {
+            this.confetti.current.startConfetti();
+        }
     }
 
-    handleClearVolume = () => {
-        this.clearVolumes();
+    handleUndoVolume = () => {
+        this.undoVolume();
         this.getVolumes(); 
     }
 
@@ -345,7 +361,7 @@ class ItemScreen extends Component {
             console.log("get volumes ERROR: ", e);
         }
     }
-
+    /*
     clearVolumes = async () => {
         try {
             const keys = await AsyncStorage.getAllKeys();
@@ -353,6 +369,28 @@ class ItemScreen extends Component {
     
             for (let volumeKey of volumeKeys) {
                 await AsyncStorage.removeItem(volumeKey);
+            }
+        } catch (e) {
+            console.log("clear volumes ERROR: ", e);
+        }
+    }
+    */
+    undoVolume = async () => {
+        try {
+            const tableData = this.state.tableData;
+            for (let i = 0; i < tableData.length; i++) {
+                const exerciseName = tableData[i][0];
+                const volumeKey = `@volume_${this.props.route.params.item.value}_${exerciseName}`;
+                const storedVolumes = await AsyncStorage.getItem(volumeKey);
+                let volumes = storedVolumes ? JSON.parse(storedVolumes) : [];
+    
+                // Remove the last element from the array
+                if (volumes.length > 0) {
+                    volumes.pop();
+                }
+    
+                // Store the updated array back to AsyncStorage
+                await AsyncStorage.setItem(volumeKey, JSON.stringify(volumes));
             }
         } catch (e) {
             console.log("clear volumes ERROR: ", e);
@@ -375,6 +413,7 @@ class ItemScreen extends Component {
         return (
             
             <View style={styles.container}>
+                <Confetti ref={this.confetti} />
                 
                 <TouchableOpacity>
                     
@@ -395,25 +434,23 @@ class ItemScreen extends Component {
                 <View
                     style={{
                         position: 'absolute',
-                        left: 150,
-                        top: 500,//620
+                        left: 120,
+                        top: 550,//620
                         zIndex: 3,
                         opacity: this.props.isEditingItems ? 1 : 0,
                     }}
                 >
                     <Button
                     title='Complete'
-                    //pass the index of the selected item to the handleComplete function
                     onPress={() => this.handleComplete()}
-                    //onPress={this.handleComplete(index)}
                     />
                     <Button
-                    title='Clear volumes'
-                    onPress={this.handleClearVolume}
+                    title='Undo Complete'
+                    onPress={this.handleUndoVolume}
                     />
                     <Button
                     title='Delete all volumes'
-                    onPress={this.deleteAllVolumes}
+                    onPress={this.deleteAllAlert}
                     />
                 </View>
                 

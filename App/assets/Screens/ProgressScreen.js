@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Button, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-//import { LineChart } from 'react-native-gifted-charts';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import Collapsible from 'react-native-collapsible';
 import { ScrollView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-//import { useEffect } from 'react';
 import { LineChart } from "react-native-chart-kit"
-import { Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 const chartConfig = {
@@ -19,6 +16,9 @@ const chartConfig = {
     barPercentage: 0.5,
     useShadowColorFromDataset: false, // optional
     fillShadowGradient: 'transparent',
+    yAxisLabel: 'vol',
+    decimalPlaces: 0,
+    
 };
 
 
@@ -81,7 +81,7 @@ const ProgressScreen = () => {
                 
             };
             getData();
-            return () => {};  // This is the cleanup function. It's not needed in this case, but it's required by the hook.
+            return () => {}; 
         }, [])
     );
 
@@ -98,100 +98,46 @@ const ProgressScreen = () => {
         return `hsl(${h}, 60%, 70%)`;
     };
 
-    
-    //volume calculation
-    const volumeCalculation = (tableData) => {
-        const volume = [];
-        if (tableData != null) {
-            for (let item of tableData) {
-                const volumeItem = [];
-                if (item != null) {
-                    for (let row of item) {
-                        const weights = parseInt(row[1]);
-                        const setsAndReps = row[2].split('X');
-                        const sets = parseInt(setsAndReps[0]);
-                        const reps = parseInt(setsAndReps[1]);
-                        if (isNaN(weights) || isNaN(sets) || isNaN(reps)) {
-                            volumeItem.push(0);
-                            continue;
-                        } 
-                        volumeItem.push(weights * sets * reps);
-                    }
-                }
-                volume.push(volumeItem);
-            }
-        }
-        return volume;
-    };
-    
 
     
     //generate data sets
-    
     const generateDataSets = (tableData) => {
         const dataSets = [];
-        const volumeData = volumeCalculation(tableData);
-
+    
         if (tableData != null) {
             for (let i = 0; i < tableData.length; i++) {
                 const item = tableData[i];
                 const lineData = [];
-
+    
                 if (item != null) {
                     for (let j = 0; j < item.length; j++) {
                         let currentColor = getRandomColor();
-                        const dataSet = {
-                            data: [volumeData[i][j]],
-                            color: (opacity = 1) => currentColor,
-                            strokeWidth: 2, // optional
-                        }
-                        lineData.push(dataSet);
-                        
-                    }
-                }
-                
-                dataSets.push(lineData);
-                
-            }
-            
-        }
-        return dataSets;
-    };
-    /*
-    const generateDataSets = (tableData) => {
-        const dataSets = [];
-        if (tableData != null) {
-            for (let item of tableData) {
-                const lineData = [];
-                if (item != null) {
-                    for (let row of item) {
-                        let currentColor = getRandomColor();
-                        const dataSet = {
-                            //data: Array.from({length: 7}, () => Math.random() * 100), // Generate an array of 7 random numbers
-                            data: volumeCalculation(tableData)[tableData.length],
-                            color: (opacity = 1) => currentColor,
-                            strokeWidth: 2, // optional
-                        }
-                        lineData.push(dataSet);
-                        
-                    }
-                }
-                
-                dataSets.push(lineData);
-                
-            }
-            
-        }
-        return dataSets;
-    };
-    */
+                        const exerciseName = item[j][0];
     
+                        // Find the exercise in exerciseVolumesData
+                        const exerciseData = exerciseVolumesData.find(exercise => exercise.exercise === exerciseName);
+    
+                        // If the exercise is found, use its volumes as data, otherwise use an empty array
+                        const data = exerciseData ? exerciseData.volumes : [];
+    
+                        const dataSet = {
+                            data: data,
+                            color: (opacity = 1) => currentColor,
+                            strokeWidth: 2, // optional
+                        }
+                        lineData.push(dataSet);
+                    }
+                }
+                
+                dataSets.push(lineData);
+            }
+        }
+        return dataSets;
+    };
+
    
 
-    //print labels from table data
-    const genLegends = () => {
-        
-    }
+    //generate legends    
     const generateLegends = (tableData) => {
         const legends = [];
         if (tableData != null) {
@@ -250,9 +196,7 @@ const ProgressScreen = () => {
                             <TouchableOpacity 
                             onPress={() => {
                                 toggleCard(index);
-                                console.log("exercise: ", exerciseVolumesData.map(item => item.exercise));
-                                console.log('legends format: ', legends);
-                                console.log('data set format: ', dataSet);
+                                
                             }}
                                 
                             style={{
